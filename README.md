@@ -9,8 +9,6 @@ Satu file HTML statis — tanpa build, tanpa dependency, semua kalkulasi berjala
 - 💰 Hitung risk amount, initial margin, position size, notional
 - 📍 Estimasi harga liquidation + cek apakah SL masih aman
 - 🎯 Take profit berlapis (TP1/TP2/TP3) dengan estimasi profit bersih setelah fee
-- 📱 Responsif: satu kolom di HP, dua kolom di desktop
-- ⚡ PWA: bisa di-install ke home screen dan jalan **offline** setelah kunjungan pertama
 - 💾 Input tersimpan otomatis di perangkat (localStorage)
 
 ## Parameter tetap
