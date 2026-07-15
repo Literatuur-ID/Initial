@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Kalkulator posisi crypto futures — risk 1% per trade, leverage 5x isolated. Hitung margin, position size, liquidation, dan take profit berlapis. 100% offline.">
+<meta name="theme-color" content="#0b0f14">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<title>Kalkulator Posisi — Risk 1%</title>
+<style>
+  :root{
+    --bg:#0b0f14; --card:#131a22; --line:#22303c; --text:#e6edf3; --muted:#8ea3b5;
+    --accent:#3ddc97; --danger:#ff5d5d; --warn:#ffb84d; --long:#3ddc97; --short:#ff6b6b;
+    --field:#0e1520;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:16px 14px calc(40px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:520px; margin:0 auto;}
+  header{grid-area:head;}
+  h1{font-size:18px; font-weight:700; margin:4px 0 2px;}
+  .sub{color:var(--muted); font-size:13px; margin-bottom:16px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px;}
+  .row{display:flex; gap:10px; margin-bottom:10px;}
+  .row > div{flex:1; min-width:0;}
+  label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px;}
+  input, select, textarea{
+    width:100%; background:var(--field); border:1px solid var(--line); color:var(--text);
+    padding:11px 10px; border-radius:9px; font-size:16px; outline:none;
+  }
+  textarea{min-height:90px; font-size:13px; font-family:inherit; resize:vertical; padding:10px;}
+  input:focus, select:focus, textarea:focus{border-color:var(--accent);}
+  .dirbtns{display:flex; gap:8px;}
+  .dirbtn{
+    flex:1; padding:11px 4px; border-radius:9px; text-align:center; font-weight:700; font-size:14px;
+    border:1px solid var(--line); cursor:pointer; user-select:none;
+    background:transparent; color:var(--text); font-family:inherit;
+  }
+  .dirbtn.long.active{background:rgba(61,220,151,0.15); border-color:var(--long); color:var(--long);}
+  .dirbtn.short.active{background:rgba(255,107,107,0.15); border-color:var(--short); color:var(--short);}
+  .fixedchip{
+    display:inline-block; font-size:11px; background:var(--field); border:1px solid var(--line);
+    color:var(--muted); padding:4px 8px; border-radius:20px; margin-right:6px; margin-top:4px;
+  }
+  button.calc{
+    width:100%; padding:14px; border:none; border-radius:11px; background:var(--accent);
+    color:#06140e; font-weight:800; font-size:15px; margin-top:4px; cursor:pointer; font-family:inherit;
+  }
+  button.calc:active{opacity:0.85;}
+  button.calc.secondary{margin-top:8px; background:#2a3a4a; color:var(--text);}
+  .result{display:none;}
+  .result.show{display:block;}
+  .rline{display:flex; justify-content:space-between; gap:8px; padding:6px 0; font-size:14px; border-bottom:1px dashed var(--line);}
+  .rline:last-child{border-bottom:none;}
+  .rline .k{color:var(--muted);}
+  .rline .v{font-weight:700; text-align:right; overflow-wrap:anywhere;}
+  .section-title{font-size:12px; font-weight:700; color:var(--muted); letter-spacing:.03em; margin:2px 0 8px; text-transform:uppercase;}
+  .badge{
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; margin-left:6px;
+  }
+  .badge.ok{background:rgba(61,220,151,0.15); color:var(--accent);}
+  .badge.bad{background:rgba(255,93,93,0.15); color:var(--danger);}
+  .warnbox{
+    background:rgba(255,184,77,0.12); border:1px solid var(--warn); color:var(--warn);
+    padding:10px 12px; border-radius:9px; font-size:13px; margin-bottom:12px; display:none;
+  }
+  .warnbox.show{display:block;}
+  .tpgrid{margin-top:6px;}
+  .tprow{display:flex; justify-content:space-between; gap:8px; font-size:13px; padding:5px 0;}
+  .tprow .lab{color:var(--muted);}
+  .footer-note{font-size:11px; color:var(--muted); text-align:center; margin-top:18px; line-height:1.5;}
+  #parseMsg{font-size:12px; color:var(--muted); margin-top:6px; min-height:1em;}
+
+  /* Desktop: dua kolom — input kiri, hasil kanan */
+  @media (min-width: 900px){
+    body{padding:28px 24px 48px;}
+    .wrap{
+      max-width:1040px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-areas:"head head" "left right" "foot foot";
+      column-gap:24px; align-items:start;
+    }
+    .col-left{grid-area:left;}
+    .col-right{grid-area:right; position:sticky; top:24px;}
+    .footer-note{grid-area:foot;}
+    .result{display:block;}
+    .result:not(.show) .card{opacity:.35;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>⚡ Kalkulator Posisi</h1>
+    <div class="sub">Risk 1% per trade · paste sinyal, langsung entry.</div>
+  </header>
+
+  <div class="col-left">
+
+    <div class="card" id="pasteCard">
+      <div class="section-title">📋 Paste Sinyal (auto-isi)</div>
+      <textarea id="pasteArea" placeholder="Tempel teks sinyal dari grup di sini..." aria-label="Teks sinyal"></textarea>
+      <button class="calc secondary" type="button" onclick="parseSignal()">Auto-Isi dari Sinyal</button>
+      <div id="parseMsg" role="status"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Sinyal</div>
+      <div class="row">
+        <div>
+          <label for="pair">Pair</label>
+          <input id="pair" type="text" placeholder="cth: XLMUSDT" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="next">
+        </div>
+        <div>
+          <label id="dirLabel">Arah</label>
+          <div class="dirbtns" role="group" aria-labelledby="dirLabel">
+            <button type="button" class="dirbtn long active" id="btnLong" onclick="setDir('long')" aria-pressed="true">LONG</button>
+            <button type="button" class="dirbtn short" id="btnShort" onclick="setDir('short')" aria-pressed="false">SHORT</button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="entry">Entry Price</label>
+          <input id="entry" type="text" inputmode="decimal" placeholder="0.00000" autocomplete="off" enterkeyhint="next">
+        </div>
+        <div>
+          <label for="sl">Stop Loss</label>
+          <input id="sl" type="text" inputmode="decimal" placeholder="0.00000" autocomplete="off" enterkeyhint="next">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="tp">Take Profit (sinyal)</label>
+          <input id="tp" type="text" inputmode="decimal" placeholder="opsional" autocomplete="off" enterkeyhint="done">
+        </div>
+        <div>
+          <label for="balance">Account Balance ($)</label>
+          <input id="balance" type="text" inputmode="decimal" value="1000" autocomplete="off" enterkeyhint="done">
+        </div>
+      </div>
+      <div>
+        <span class="fixedchip">Leverage: 5x (tetap)</span>
+        <span class="fixedchip">Margin: Isolated (tetap)</span>
+        <span class="fixedchip">Risk: 1% (tetap)</span>
+        <span class="fixedchip">Fee: 0,05%/sisi</span>
+      </div>
+    </div>
+
+    <button class="calc" type="button" onclick="calculate()">Hitung Posisi</button>
+
+  </div>
+
+  <div class="col-right">
+
+    <div class="warnbox" id="warnBox" role="alert"></div>
+
+    <div class="result" id="result" aria-live="polite">
+
+      <div class="card">
+        <div class="section-title">💰 Sizing</div>
+        <div class="rline"><span class="k">Risk Amount (1%)</span><span class="v" id="rRisk">-</span></div>
+        <div class="rline"><span class="k">Initial Margin</span><span class="v" id="rMargin">-</span></div>
+        <div class="rline"><span class="k">Position Size</span><span class="v" id="rSize">-</span></div>
+        <div class="rline"><span class="k">Notional Value</span><span class="v" id="rNotional">-</span></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">📍 Entry &amp; Stop</div>
+        <div class="rline"><span class="k">Entry</span><span class="v" id="rEntry">-</span></div>
+        <div class="rline"><span class="k">Stop Loss</span><span class="v" id="rSL">-</span></div>
+        <div class="rline"><span class="k">Risk Distance</span><span class="v" id="rDist">-</span></div>
+        <div class="rline"><span class="k">Est. Liquidation</span><span class="v" id="rLiq">-</span></div>
+        <div class="rline"><span class="k">Status Aman?</span><span class="v" id="rSafe">-</span></div>
+      </div>
+
+      <div class="card" id="tpCard">
+        <div class="section-title">🎯 Take Profit Berlapis <span id="rRR"></span></div>
+        <div class="tpgrid" id="tpGrid"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">🔢 Fee Estimasi</div>
+        <div class="rline"><span class="k">Fee Entry</span><span class="v" id="rFeeEntry">-</span></div>
+        <div class="rline"><span class="k">Fee Exit (avg)</span><span class="v" id="rFeeExit">-</span></div>
+        <div class="rline"><span class="k">Total Fee</span><span class="v" id="rFeeTotal">-</span></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footer-note">
+    Semua kalkulasi dilakukan langsung di perangkat kamu (offline, tidak dikirim ke mana pun).<br>
+    Leverage 5x · Isolated · Risk 1% selalu dipakai otomatis.
+  </div>
+
+</div>
+
+<script>
+function parseSignal(){
+  const msg = document.getElementById('parseMsg');
+  const text = document.getElementById('pasteArea').value;
+  if(!text.trim()){
+    msg.textContent = '⚠️ Belum ada teks yang di-paste.';
+    msg.style.color = 'var(--warn)';
+    return;
+  }
+
+  const pairMatch = text.match(/Pair\s*:\s*([A-Za-z0-9]+)/i);
+  const posMatch = text.match(/Position\s*:[\s\S]*?(Long|Short)/i);
+  const entryMatch = text.match(/Entry\s*Price\s*:\s*([\d.,]+)/i);
+  const tpMatch = text.match(/Take\s*Profit\s*:\s*([\d.,]+)/i);
+  const slMatch = text.match(/Stop\s*Loss\s*:\s*([\d.,]+)/i);
+
+  let found = [];
+  let missing = [];
+
+  if(pairMatch){ document.getElementById('pair').value = pairMatch[1].toUpperCase(); found.push('Pair'); } else missing.push('Pair');
+  if(posMatch){ setDir(posMatch[1].toLowerCase()); found.push('Posisi'); } else missing.push('Posisi');
+  if(entryMatch){ document.getElementById('entry').value = entryMatch[1].replace(',', '.'); found.push('Entry'); } else missing.push('Entry');
+  if(slMatch){ document.getElementById('sl').value = slMatch[1].replace(',', '.'); found.push('SL'); } else missing.push('SL');
+  if(tpMatch){ document.getElementById('tp').value = tpMatch[1].replace(',', '.'); found.push('TP'); } else missing.push('TP');
+
+  if(missing.length === 0){
+    msg.textContent = '✅ Semua field terisi (' + found.join(', ') + '). Tinggal tap "Hitung Posisi".';
+    msg.style.color = 'var(--accent)';
+    calculate();
+  } else {
+    msg.textContent = '⚠️ Tidak terbaca: ' + missing.join(', ') + '. Isi manual di bawah.';
+    msg.style.color = 'var(--warn)';
+  }
+}
+
+let direction = 'long';
+function setDir(d){
+  direction = d;
+  const isLong = d === 'long';
+  const btnLong = document.getElementById('btnLong');
+  const btnShort = document.getElementById('btnShort');
+  btnLong.classList.toggle('active', isLong);
+  btnShort.classList.toggle('active', !isLong);
+  btnLong.setAttribute('aria-pressed', isLong);
+  btnShort.setAttribute('aria-pressed', !isLong);
+  saveState();
+  autoRecalc();
+}
+
+function fmtUSD(n){
+  if(!isFinite(n)) return '-';
+  return '$' + n.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtPct(n){
+  if(!isFinite(n)) return '-';
+  return n.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2}) + '%';
+}
+function fmtPrice(n){
+  if(!isFinite(n)) return '-';
+  let dec = 5;
+  if(n >= 1000) dec = 2;
+  else if(n >= 100) dec = 3;
+  else if(n >= 1) dec = 4;
+  else if(n >= 0.01) dec = 5;
+  else dec = 6;
+  return n.toLocaleString('en-US', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+}
+function parseNum(id){
+  const el = document.getElementById(id);
+  let raw = (el.value || '').trim();
+  if(raw.indexOf(',') !== -1 && raw.indexOf('.') !== -1){
+    raw = raw.replace(/,/g, '');
+  } else if(raw.indexOf(',') !== -1){
+    raw = raw.replace(',', '.');
+  }
+  return parseFloat(raw);
+}
+function attachCommaFix(id){
+  const el = document.getElementById(id);
+  el.addEventListener('blur', ()=>{
+    const n = parseNum(id);
+    if(isFinite(n)) el.value = String(n);
+  });
+}
+['entry','sl','tp','balance'].forEach(attachCommaFix);
+
+function fmtQty(n){
+  if(!isFinite(n)) return '-';
+  let dec = n < 1 ? 4 : (n < 100 ? 2 : 0);
+  return n.toLocaleString('en-US', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+}
+
+function calculate(){
+  const warnBox = document.getElementById('warnBox');
+  warnBox.className = 'warnbox';
+  warnBox.innerHTML = '';
+
+  const pair = (document.getElementById('pair').value || '—').toUpperCase();
+  const entry = parseNum('entry');
+  const sl = parseNum('sl');
+  let tp = parseNum('tp');
+  const balance = parseNum('balance') || 1000;
+
+  const LEV = 5;
+  const RISK_PCT = 0.01;
+  const TAKER_FEE = 0.0005; // 0.05% per sisi
+
+  if(!entry || !sl || entry<=0 || sl<=0){
+    warnBox.innerHTML = '⚠️ Isi Entry Price dan Stop Loss dulu.';
+    warnBox.className = 'warnbox show';
+    document.getElementById('result').classList.remove('show');
+    return;
+  }
+  if((direction==='long' && sl>=entry) || (direction==='short' && sl<=entry)){
+    warnBox.innerHTML = '⚠️ Stop Loss tidak sesuai arah posisi. Cek ulang.';
+    warnBox.className = 'warnbox show';
+    document.getElementById('result').classList.remove('show');
+    return;
+  }
+
+  const riskAmount = balance * RISK_PCT;
+
+  // Risk distance
+  let riskDistPct;
+  if(direction==='short') riskDistPct = (sl - entry)/entry;
+  else riskDistPct = (entry - sl)/entry;
+
+  const effLossRate = riskDistPct * LEV;
+  const feeRate = LEV * (TAKER_FEE*2);
+  const initialMargin = riskAmount / (effLossRate + feeRate);
+  const posSize = (initialMargin * LEV) / entry;
+  const notional = posSize * entry;
+
+  // Liquidation price estimate (isolated, mmr approx 0.5%)
+  const MMR = 0.005;
+  let liqPrice;
+  if(direction==='long') liqPrice = entry * (1 - (1/LEV) + MMR);
+  else liqPrice = entry * (1 + (1/LEV) - MMR);
+
+  let safe;
+  if(direction==='long') safe = sl > liqPrice;
+  else safe = sl < liqPrice;
+
+  // Fill result
+  document.getElementById('rRisk').textContent = fmtUSD(riskAmount);
+  document.getElementById('rMargin').textContent = fmtUSD(initialMargin);
+  document.getElementById('rSize').textContent = fmtQty(posSize) + ' ' + pair.replace('USDT','');
+  document.getElementById('rNotional').textContent = fmtUSD(notional);
+  document.getElementById('rEntry').textContent = fmtPrice(entry);
+  document.getElementById('rSL').textContent = fmtPrice(sl);
+  document.getElementById('rDist').textContent = fmtPct(riskDistPct*100);
+  document.getElementById('rLiq').textContent = fmtPrice(liqPrice);
+  document.getElementById('rSafe').innerHTML = safe
+    ? '<span class="badge ok">Aman ✅</span>'
+    : '<span class="badge bad">SL DI LUAR LIQ! 🚨</span>';
+
+  if(!safe){
+    warnBox.innerHTML = '🚨 Stop Loss kamu berada di luar/setelah estimasi harga liquidation. Posisi bisa ke-liquidate sebelum SL kena. Perkecil size / geser SL lebih dekat.';
+    warnBox.className = 'warnbox show';
+  }
+
+  // TP layered
+  const tpCard = document.getElementById('tpCard');
+  const tpGrid = document.getElementById('tpGrid');
+  const rrEl = document.getElementById('rRR');
+  tpGrid.innerHTML = '';
+  rrEl.textContent = '';
+
+  const riskDistAbs = entry * riskDistPct;
+
+  function feeExit(qty, price){
+    return qty * price * TAKER_FEE;
+  }
+  function grossProfit(qty, priceDiff){
+    return qty * priceDiff;
+  }
+
+  if(isFinite(tp) && tp>0){
+    let rewardDistPct;
+    if(direction==='short') rewardDistPct = (entry - tp)/entry;
+    else rewardDistPct = (tp - entry)/entry;
+
+    const rr = rewardDistPct / riskDistPct;
+    rrEl.textContent = '(R:R = 1:' + rr.toFixed(2) + ')';
+
+    let levels = [];
+    if(rr < 1){
+      levels = [{label:'TP3 (target sinyal)', price: tp, prop: 1.0}];
+      warnBox.innerHTML += (warnBox.innerHTML? '<br>':'') + '⚠️ R:R di bawah 1:1 — reward lebih kecil dari risk.';
+      warnBox.className = 'warnbox show';
+    } else if(rr < 2){
+      const tp1 = direction==='short' ? entry - riskDistAbs : entry + riskDistAbs;
+      levels = [
+        {label:'TP1 (1:1)', price: tp1, prop: 0.5},
+        {label:'TP3 (target sinyal)', price: tp, prop: 0.5}
+      ];
+    } else {
+      const tp1 = direction==='short' ? entry - riskDistAbs : entry + riskDistAbs;
+      const tp2 = direction==='short' ? entry - 2*riskDistAbs : entry + 2*riskDistAbs;
+      levels = [
+        {label:'TP1 (1:1)', price: tp1, prop: 0.33},
+        {label:'TP2 (1:2)', price: tp2, prop: 0.33},
+        {label:'TP3 (target sinyal)', price: tp, prop: 0.34}
+      ];
+    }
+
+    let totalProfit = 0;
+    levels.forEach(lv=>{
+      const qty = posSize * lv.prop;
+      const diff = direction==='short' ? (entry - lv.price) : (lv.price - entry);
+      const gross = grossProfit(qty, diff);
+      const fee = feeExit(qty, lv.price);
+      const net = gross - fee;
+      totalProfit += net;
+      const row = document.createElement('div');
+      row.className = 'tprow';
+      row.innerHTML = `<span class="lab">${lv.label} · ${fmtPrice(lv.price)} · tutup ${(lv.prop*100).toFixed(0)}%</span><span>+${fmtUSD(net)}</span>`;
+      tpGrid.appendChild(row);
+    });
+    const totalRow = document.createElement('div');
+    totalRow.className = 'tprow';
+    totalRow.style.borderTop = '1px solid var(--line)';
+    totalRow.style.paddingTop = '8px';
+    totalRow.style.marginTop = '4px';
+    totalRow.innerHTML = `<span class="lab" style="font-weight:700;color:var(--text)">Total jika semua TP kena</span><span style="color:var(--accent);font-weight:800">+${fmtUSD(totalProfit)}</span>`;
+    tpGrid.appendChild(totalRow);
+
+    tpCard.style.display = 'block';
+  } else {
+    tpCard.style.display = 'none';
+  }
+
+  // Fees
+  const feeEntry = notional * TAKER_FEE;
+  const feeExitAvg = notional * TAKER_FEE; // avg, assuming exit near entry notional
+  document.getElementById('rFeeEntry').textContent = fmtUSD(feeEntry);
+  document.getElementById('rFeeExit').textContent = fmtUSD(feeExitAvg) + ' (est.)';
+  document.getElementById('rFeeTotal').textContent = fmtUSD(feeEntry + feeExitAvg);
+
+  document.getElementById('result').classList.add('show');
+  saveState();
+}
+
+// ---- UX: simpan input, Enter = hitung, live recalc ----
+const STORE_KEY = 'kalkulator-posisi-v1';
+const FIELDS = ['pair','entry','sl','tp','balance'];
+
+function saveState(){
+  try{
+    const data = {direction};
+    FIELDS.forEach(id => data[id] = document.getElementById(id).value);
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const data = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+    FIELDS.forEach(id => { if(data[id]) document.getElementById(id).value = data[id]; });
+    if(data.direction === 'short' || data.direction === 'long'){
+      direction = data.direction;
+      const isLong = direction === 'long';
+      document.getElementById('btnLong').classList.toggle('active', isLong);
+      document.getElementById('btnShort').classList.toggle('active', !isLong);
+      document.getElementById('btnLong').setAttribute('aria-pressed', isLong);
+      document.getElementById('btnShort').setAttribute('aria-pressed', !isLong);
+    }
+  }catch(e){}
+}
+
+let recalcTimer;
+function autoRecalc(){
+  clearTimeout(recalcTimer);
+  recalcTimer = setTimeout(()=>{
+    const entry = parseNum('entry');
+    const sl = parseNum('sl');
+    if(document.getElementById('result').classList.contains('show') && isFinite(entry) && isFinite(sl)){
+      calculate();
+    }
+  }, 250);
+}
+
+FIELDS.forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', ()=>{ saveState(); autoRecalc(); });
+  el.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); el.blur(); calculate(); }
+  });
+});
+document.getElementById('pair').addEventListener('input', function(){
+  this.value = this.value.toUpperCase();
+});
+
+loadState();
+
+// PWA: offline setelah kunjungan pertama
+if('serviceWorker' in navigator && location.protocol === 'https:'){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
