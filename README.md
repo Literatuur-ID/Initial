@@ -13,35 +13,6 @@ Satu file HTML statis — tanpa build, tanpa dependency, semua kalkulasi berjala
 - ⚡ PWA: bisa di-install ke home screen dan jalan **offline** setelah kunjungan pertama
 - 💾 Input tersimpan otomatis di perangkat (localStorage)
 
-## Deploy ke GitHub Pages
-
-1. Buat repository baru di GitHub (misal `kalkulator-posisi`).
-2. Upload semua file di folder ini (`index.html`, `manifest.json`, `sw.js`, `icon.svg`, `README.md`):
-
-   ```bash
-   git init
-   git add index.html manifest.json sw.js icon.svg README.md
-   git commit -m "Kalkulator posisi risk 1%"
-   git branch -M main
-   git remote add origin https://github.com/<username>/kalkulator-posisi.git
-   git push -u origin main
-   ```
-
-3. Di GitHub: **Settings → Pages → Source: Deploy from a branch → Branch: `main` / root → Save**.
-4. Tunggu ±1 menit, lalu buka `https://<username>.github.io/kalkulator-posisi/`.
-
-> Catatan: setiap kali mengubah `index.html`, naikkan versi cache di `sw.js`
-> (`kalkulator-posisi-v1` → `-v2`, dst.) agar pengguna lama mendapat versi terbaru.
-
-## Jalankan lokal
-
-Cukup buka `index.html` di browser, atau:
-
-```bash
-python3 -m http.server 8000
-# buka http://localhost:8000
-```
-
 ## Parameter tetap
 
 | Parameter | Nilai |
