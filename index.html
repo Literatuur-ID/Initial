@@ -207,13 +207,31 @@
 </div>
 
 <script>
+function decodeSignalText(text){
+  // Teks hasil copy dari screenshot/link sering ter-URL-encode (%20, %0A, %3A, dst.)
+  if(!/%[0-9A-Fa-f]{2}/.test(text)) return text;
+  try{
+    return decodeURIComponent(text.replace(/\+/g, ' '));
+  }catch(e){
+    // decode per-token agar teks yang hanya sebagian ter-encode tetap terbaca
+    return text.replace(/%[0-9A-Fa-f]{2}/g, m => {
+      try{ return decodeURIComponent(m); }catch(_){ return m; }
+    });
+  }
+}
+
 function parseSignal(){
   const msg = document.getElementById('parseMsg');
-  const text = document.getElementById('pasteArea').value;
+  let text = document.getElementById('pasteArea').value;
   if(!text.trim()){
     msg.textContent = '⚠️ Belum ada teks yang di-paste.';
     msg.style.color = 'var(--warn)';
     return;
+  }
+  const decoded = decodeSignalText(text);
+  if(decoded !== text){
+    text = decoded;
+    document.getElementById('pasteArea').value = decoded;
   }
 
   const pairMatch = text.match(/Pair\s*:\s*([A-Za-z0-9]+)/i);
@@ -496,6 +514,11 @@ FIELDS.forEach(id => {
 });
 document.getElementById('pair').addEventListener('input', function(){
   this.value = this.value.toUpperCase();
+});
+
+// Auto-parse begitu sinyal di-paste ke textarea
+document.getElementById('pasteArea').addEventListener('paste', ()=>{
+  setTimeout(parseSignal, 0);
 });
 
 loadState();
