@@ -1,13 +1,13 @@
 {
-  "name": "Kalkulator Posisi — Risk 1%",
-  "short_name": "Kalkulator Posisi",
-  "description": "Kalkulator posisi crypto futures: risk 1%, leverage 5x isolated. Offline.",
+  "name": "Sniper Entry",
+  "short_name": "Sniper Entry",
+  "description": "Crypto futures position calculator: adjustable risk, 5x isolated leverage. Offline.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
-  "background_color": "#0b0f14",
-  "theme_color": "#0b0f14",
-  "lang": "id",
+  "background_color": "#05060f",
+  "theme_color": "#05060f",
+  "lang": "en",
   "icons": [
     {
       "src": "icon.svg",

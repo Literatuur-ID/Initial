@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Kalkulator posisi crypto futures. Risk per trade bisa diatur, leverage 5x isolated. Hitung margin, position size, liquidation, dan take profit berlapis. 100% offline.">
+<meta name="description" content="Crypto futures position calculator. Adjustable risk per trade, 5x isolated leverage. Calculates margin, position size, liquidation and layered take profits. 100% offline.">
 <meta name="theme-color" content="#05060f">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
-<title>Kalkulator Posisi</title>
+<title>Sniper Entry</title>
 <style>
   :root{
     --bg:#05060f;
@@ -143,7 +143,10 @@
     box-shadow:0 0 0 4px rgba(102,58,243,0.35), 0 2px 8px rgba(0,0,0,0.5);
   }
   input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 6px rgba(102,58,243,0.55);}
-  .ticks{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--fog); letter-spacing:0.05em; margin-top:4px;}
+  /* Tick labels are placed at the thumb centre for each value (thumb 22px wide) */
+  .ticks{position:relative; height:14px; font-family:var(--font-mono); font-size:10px; color:var(--fog); letter-spacing:0.05em; margin-top:6px;}
+  .ticks span{position:absolute; top:0; transform:translateX(-50%); white-space:nowrap; cursor:pointer;}
+  .ticks span.on{color:var(--text);}
 
   /* Primary CTA */
   button.calc{
@@ -200,23 +203,21 @@
   .tp-close b{display:block; font-family:var(--font-display); font-size:20px; font-weight:500; color:var(--long);}
   .tp-close span{font-size:11px; color:var(--fog);}
 
-  .footer-note{font-size:12px; color:var(--fog); text-align:center; margin-top:24px; line-height:1.5;}
   #parseMsg{font-size:12px; color:var(--fog); margin-top:10px; min-height:1em; line-height:1.4;}
 
-  /* Desktop: dua kolom, input kiri, hasil kanan */
+  /* Desktop: two columns, inputs left, results right */
   @media (min-width: 900px){
     body{padding:48px 24px 56px;}
     .wrap{
       max-width:1080px;
       display:grid;
       grid-template-columns:1fr 1fr;
-      grid-template-areas:"head head" "left right" "foot foot";
+      grid-template-areas:"head head" "left right";
       column-gap:24px; align-items:start;
     }
     h1{font-size:44px; line-height:1.16;}
     .col-left{grid-area:left;}
     .col-right{grid-area:right; position:sticky; top:24px;}
-    .footer-note{grid-area:foot;}
     .result{display:block;}
     .result:not(.show) .card{opacity:.35;}
   }
@@ -226,32 +227,30 @@
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">⚡ Futures · 5x Isolated</div>
-    <h1>Kalkulator Posisi</h1>
-    <div class="sub">Risk <span id="subRisk">2%</span> per trade · paste sinyal, langsung entry.</div>
+    <h1>Sniper Entry</h1>
   </header>
 
   <div class="col-left">
 
     <div class="card" id="pasteCard">
-      <div class="card-head"><div class="section-title">Paste Sinyal</div></div>
-      <textarea id="pasteArea" placeholder="Tempel teks sinyal dari grup di sini..." aria-label="Teks sinyal"></textarea>
+      <div class="card-head"><div class="section-title">Paste Signal</div></div>
+      <textarea id="pasteArea" placeholder="Paste the signal text here..." aria-label="Signal text"></textarea>
       <div class="btnrow">
-        <button class="pill" type="button" onclick="parseSignal()">Auto-Isi dari Sinyal</button>
-        <button class="pill outline" type="button" onclick="resetSignal()" title="Hapus sinyal dan hasil sebelumnya">↺ Reset</button>
+        <button class="pill" type="button" onclick="parseSignal()">Auto-Fill from Signal</button>
+        <button class="pill outline" type="button" onclick="resetSignal()" title="Clear the signal and previous results">↺ Reset</button>
       </div>
       <div id="parseMsg" role="status"></div>
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="section-title">Sinyal</div></div>
+      <div class="card-head"><div class="section-title">Signal</div></div>
       <div class="row">
         <div>
           <label for="pair">Pair</label>
-          <input id="pair" type="text" placeholder="cth: XLMUSDT" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="next">
+          <input id="pair" type="text" placeholder="e.g. XLMUSDT" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="next">
         </div>
         <div>
-          <label id="dirLabel">Arah</label>
+          <label id="dirLabel">Direction</label>
           <div class="dirbtns" role="group" aria-labelledby="dirLabel">
             <button type="button" class="dirbtn long active" id="btnLong" onclick="setDir('long')" aria-pressed="true">LONG</button>
             <button type="button" class="dirbtn short" id="btnShort" onclick="setDir('short')" aria-pressed="false">SHORT</button>
@@ -270,8 +269,8 @@
       </div>
       <div class="row">
         <div>
-          <label for="tp">Take Profit (sinyal)</label>
-          <input id="tp" type="text" inputmode="decimal" placeholder="opsional" autocomplete="off" enterkeyhint="done">
+          <label for="tp">Take Profit (signal)</label>
+          <input id="tp" type="text" inputmode="decimal" placeholder="optional" autocomplete="off" enterkeyhint="done">
         </div>
         <div>
           <label for="balance">Account Balance ($)</label>
@@ -279,8 +278,8 @@
         </div>
       </div>
       <div class="chips">
-        <span class="fixedchip">Leverage 5x (tetap)</span>
-        <span class="fixedchip">Margin Isolated (tetap)</span>
+        <span class="fixedchip">Leverage 5x (fixed)</span>
+        <span class="fixedchip">Isolated Margin (fixed)</span>
       </div>
     </div>
 
@@ -290,10 +289,10 @@
         <div class="risk-val" id="riskVal">2%<small id="riskUsd"></small></div>
       </div>
       <input id="risk" type="range" min="0.5" max="5" step="0.5" value="2" aria-describedby="riskVal">
-      <div class="ticks" aria-hidden="true"><span>0,5%</span><span>1%</span><span>2%</span><span>3%</span><span>4%</span><span>5%</span></div>
+      <div class="ticks" id="ticks" aria-hidden="true"></div>
     </div>
 
-    <button class="calc" type="button" onclick="calculate()">Hitung Posisi</button>
+    <button class="calc" type="button" onclick="calculate()">Calculate Position</button>
 
   </div>
 
@@ -318,11 +317,11 @@
         <div class="rline"><span class="k">Stop Loss</span><span class="v" id="rSL">-</span></div>
         <div class="rline"><span class="k">Risk Distance</span><span class="v" id="rDist">-</span></div>
         <div class="rline"><span class="k">Est. Liquidation</span><span class="v" id="rLiq">-</span></div>
-        <div class="rline"><span class="k">Status Aman?</span><span class="v" id="rSafe">-</span></div>
+        <div class="rline"><span class="k">Safe?</span><span class="v" id="rSafe">-</span></div>
       </div>
 
       <div class="card" id="tpCard">
-        <div class="card-head"><div class="section-title">Take Profit Berlapis</div><span id="rRR"></span></div>
+        <div class="card-head"><div class="section-title">Layered Take Profit</div><span id="rRR"></span></div>
         <div class="tpgrid" id="tpGrid"></div>
       </div>
 
@@ -330,21 +329,16 @@
 
   </div>
 
-  <div class="footer-note">
-    Semua kalkulasi dilakukan langsung di perangkat kamu (offline, tidak dikirim ke mana pun).<br>
-    Leverage 5x · Isolated · Sizing sudah memperhitungkan fee taker 0,05%/sisi.
-  </div>
-
 </div>
 
 <script>
 function decodeSignalText(text){
-  // Teks hasil copy dari screenshot/link sering ter-URL-encode (%20, %0A, %3A, dst.)
+  // Text copied from screenshots/links is often URL-encoded (%20, %0A, %3A, etc.)
   if(!/%[0-9A-Fa-f]{2}/.test(text)) return text;
   try{
     return decodeURIComponent(text.replace(/\+/g, ' '));
   }catch(e){
-    // decode per-token agar teks yang hanya sebagian ter-encode tetap terbaca
+    // decode token by token so partially encoded text is still readable
     return text.replace(/%[0-9A-Fa-f]{2}/g, m => {
       try{ return decodeURIComponent(m); }catch(_){ return m; }
     });
@@ -360,7 +354,7 @@ function setMsg(text, color){
 function parseSignal(){
   let text = document.getElementById('pasteArea').value;
   if(!text.trim()){
-    setMsg('⚠️ Belum ada teks yang di-paste.', 'var(--warn)');
+    setMsg('⚠️ No signal text pasted yet.', 'var(--warn)');
     return;
   }
   const decoded = decodeSignalText(text);
@@ -379,20 +373,20 @@ function parseSignal(){
   let missing = [];
 
   if(pairMatch){ document.getElementById('pair').value = pairMatch[1].toUpperCase(); found.push('Pair'); } else missing.push('Pair');
-  if(posMatch){ setDir(posMatch[1].toLowerCase()); found.push('Posisi'); } else missing.push('Posisi');
+  if(posMatch){ setDir(posMatch[1].toLowerCase()); found.push('Direction'); } else missing.push('Direction');
   if(entryMatch){ document.getElementById('entry').value = entryMatch[1].replace(',', '.'); found.push('Entry'); } else missing.push('Entry');
   if(slMatch){ document.getElementById('sl').value = slMatch[1].replace(',', '.'); found.push('SL'); } else missing.push('SL');
   if(tpMatch){ document.getElementById('tp').value = tpMatch[1].replace(',', '.'); found.push('TP'); } else missing.push('TP');
 
   if(missing.length === 0){
-    setMsg('✅ Semua field terisi (' + found.join(', ') + '). Posisi sudah dihitung.', 'var(--long)');
+    setMsg('✅ All fields filled (' + found.join(', ') + '). Position calculated.', 'var(--long)');
     calculate();
   } else {
-    setMsg('⚠️ Tidak terbaca: ' + missing.join(', ') + '. Isi manual di bawah.', 'var(--warn)');
+    setMsg('⚠️ Could not read: ' + missing.join(', ') + '. Fill them in manually below.', 'var(--warn)');
   }
 }
 
-// Hapus sinyal & hasil sebelumnya. Balance dan risk tetap disimpan.
+// Clear the signal and previous results. Balance and risk are kept.
 function resetSignal(){
   document.getElementById('pasteArea').value = '';
   ['pair','entry','sl','tp'].forEach(id => document.getElementById(id).value = '');
@@ -405,7 +399,7 @@ function resetSignal(){
   document.getElementById('tpGrid').innerHTML = '';
   document.getElementById('rRR').innerHTML = '';
   document.getElementById('tpCard').style.display = 'block';
-  setMsg('Sinyal dihapus. Siap paste sinyal baru.');
+  setMsg('Signal cleared. Ready for a new one.');
   saveState();
   document.getElementById('pasteArea').focus();
 }
@@ -430,7 +424,7 @@ function setDir(d){
 // ---- Risk slider ----
 const riskEl = document.getElementById('risk');
 function getRiskPct(){ return parseFloat(riskEl.value) || 2; }
-function fmtRisk(p){ return p.toLocaleString('id-ID', {maximumFractionDigits:1}) + '%'; }
+function fmtRisk(p){ return p.toLocaleString('en-US', {maximumFractionDigits:1}) + '%'; }
 function updateRiskUI(){
   const p = getRiskPct();
   const min = parseFloat(riskEl.min), max = parseFloat(riskEl.max);
@@ -438,18 +432,31 @@ function updateRiskUI(){
   const bal = parseNum('balance');
   document.getElementById('riskVal').firstChild.nodeValue = fmtRisk(p);
   document.getElementById('riskUsd').textContent = isFinite(bal) && bal > 0 ? '≈ ' + fmtUSD(bal * p / 100) : '';
-  document.getElementById('subRisk').textContent = fmtRisk(p);
   document.getElementById('rRiskPct').textContent = fmtRisk(p);
+  document.querySelectorAll('#ticks span').forEach(t => t.classList.toggle('on', parseFloat(t.dataset.v) === p));
 }
 riskEl.addEventListener('input', ()=>{ updateRiskUI(); saveState(); autoRecalc(); });
+(function buildTicks(){
+  const min = parseFloat(riskEl.min), max = parseFloat(riskEl.max), THUMB = 22;
+  const box = document.getElementById('ticks');
+  [0.5,1,2,3,4,5].forEach(v=>{
+    const f = (v - min) / (max - min);
+    const t = document.createElement('span');
+    t.dataset.v = v;
+    t.textContent = fmtRisk(v);
+    t.style.left = `calc(${f*100}% + ${THUMB/2 - f*THUMB}px)`;
+    t.addEventListener('click', ()=>{ riskEl.value = v; riskEl.dispatchEvent(new Event('input')); });
+    box.appendChild(t);
+  });
+})();
 
 function fmtUSD(n){
   if(!isFinite(n)) return '-';
-  return '$' + n.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 function fmtPct(n){
   if(!isFinite(n)) return '-';
-  return n.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2}) + '%';
+  return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + '%';
 }
 function fmtPrice(n){
   if(!isFinite(n)) return '-';
@@ -500,16 +507,16 @@ function calculate(){
 
   const LEV = 5;
   const RISK_PCT = getRiskPct() / 100;
-  const TAKER_FEE = 0.0005; // 0.05% per sisi
+  const TAKER_FEE = 0.0005; // 0.05% per side
 
   if(!entry || !sl || entry<=0 || sl<=0){
-    warnBox.innerHTML = '⚠️ Isi Entry Price dan Stop Loss dulu.';
+    warnBox.innerHTML = '⚠️ Enter the Entry Price and Stop Loss first.';
     warnBox.className = 'warnbox show';
     document.getElementById('result').classList.remove('show');
     return;
   }
   if((direction==='long' && sl>=entry) || (direction==='short' && sl<=entry)){
-    warnBox.innerHTML = '⚠️ Stop Loss tidak sesuai arah posisi. Cek ulang.';
+    warnBox.innerHTML = '⚠️ Stop Loss does not match the position direction. Please check.';
     warnBox.className = 'warnbox show';
     document.getElementById('result').classList.remove('show');
     return;
@@ -546,15 +553,15 @@ function calculate(){
   document.getElementById('rDist').textContent = fmtPct(riskDistPct*100);
   document.getElementById('rLiq').textContent = fmtPrice(liqPrice);
   document.getElementById('rSafe').innerHTML = safe
-    ? '<span class="badge ok">Aman ✅</span>'
-    : '<span class="badge bad">SL DI LUAR LIQ! 🚨</span>';
+    ? '<span class="badge ok">Safe ✅</span>'
+    : '<span class="badge bad">SL BEYOND LIQ! 🚨</span>';
 
   if(!safe){
-    warnBox.innerHTML = '🚨 Stop Loss kamu berada di luar/setelah estimasi harga liquidation. Posisi bisa ke-liquidate sebelum SL kena. Perkecil size / geser SL lebih dekat.';
+    warnBox.innerHTML = '🚨 Your Stop Loss is beyond the estimated liquidation price. The position may be liquidated before the SL is hit. Reduce size or move the SL closer.';
     warnBox.className = 'warnbox show';
   }
 
-  // TP berlapis: harga dan persentase close dari total posisi
+  // Layered TP: price and close percentage of the total position
   const tpCard = document.getElementById('tpCard');
   const tpGrid = document.getElementById('tpGrid');
   const rrEl = document.getElementById('rRR');
@@ -574,7 +581,7 @@ function calculate(){
     let levels = [];
     if(rr < 1){
       levels = [{price: tp, prop: 1.0}];
-      warnBox.innerHTML += (warnBox.innerHTML? '<br>':'') + '⚠️ R:R di bawah 1:1, reward lebih kecil dari risk.';
+      warnBox.innerHTML += (warnBox.innerHTML? '<br>':'') + '⚠️ R:R is below 1:1, reward is smaller than risk.';
       warnBox.className = 'warnbox show';
     } else if(rr < 2){
       const tp1 = direction==='short' ? entry - riskDistAbs : entry + riskDistAbs;
@@ -612,7 +619,7 @@ function calculate(){
   saveState();
 }
 
-// ---- UX: simpan input, Enter = hitung, live recalc ----
+// ---- UX: save inputs, Enter = calculate, live recalc ----
 const STORE_KEY = 'kalkulator-posisi-v1';
 const FIELDS = ['pair','entry','sl','tp','balance'];
 
@@ -655,7 +662,7 @@ document.getElementById('pair').addEventListener('input', function(){
   this.value = this.value.toUpperCase();
 });
 
-// Auto-parse begitu sinyal di-paste ke textarea
+// Auto-parse as soon as a signal is pasted
 document.getElementById('pasteArea').addEventListener('paste', ()=>{
   setTimeout(parseSignal, 0);
 });
@@ -663,7 +670,7 @@ document.getElementById('pasteArea').addEventListener('paste', ()=>{
 loadState();
 updateRiskUI();
 
-// PWA: offline setelah kunjungan pertama
+// PWA: works offline after the first visit
 if('serviceWorker' in navigator && location.protocol === 'https:'){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
