@@ -3,91 +3,217 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Kalkulator posisi crypto futures — risk 1% per trade, leverage 5x isolated. Hitung margin, position size, liquidation, dan take profit berlapis. 100% offline.">
-<meta name="theme-color" content="#0b0f14">
+<meta name="description" content="Kalkulator posisi crypto futures. Risk per trade bisa diatur, leverage 5x isolated. Hitung margin, position size, liquidation, dan take profit berlapis. 100% offline.">
+<meta name="theme-color" content="#05060f">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="manifest" href="manifest.json">
-<title>Kalkulator Posisi — Risk 1%</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<title>Kalkulator Posisi</title>
 <style>
   :root{
-    --bg:#0b0f14; --card:#131a22; --line:#22303c; --text:#e6edf3; --muted:#8ea3b5;
-    --accent:#3ddc97; --danger:#ff5d5d; --warn:#ffb84d; --long:#3ddc97; --short:#ff6b6b;
-    --field:#0e1520;
+    --bg:#05060f;
+    --surface:rgba(186,214,247,0.03);
+    --surface-2:rgba(199,211,234,0.06);
+    --tint:rgba(199,211,234,0.12);
+    --edge:rgba(186,215,247,0.12);
+    --edge-strong:rgba(186,215,247,0.24);
+    --text:#ffffff;
+    --frost:#d1e4fa;
+    --mist:#c7d3ea;
+    --fog:#9da7ba;
+    --violet:#663af3;
+    --violet-hi:#7a54f5;
+    --long:#4fd1a5;
+    --short:#ff7a6b;
+    --warn:#f5c26b;
+    --danger:#ff6b6b;
+    --font-ui:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --font-display:"Space Grotesk","Inter",-apple-system,BlinkMacSystemFont,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --shadow-card:inset 0 1px 1px rgba(199,211,234,0.12), inset 0 24px 48px rgba(199,211,234,0.05), 0 24px 32px rgba(6,6,14,0.7);
+    --shadow-hero:inset 0 1px 1px rgba(216,236,248,0.2), inset 0 24px 48px rgba(168,216,245,0.06), 0 16px 32px rgba(0,0,0,0.3);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html{-webkit-text-size-adjust:100%;}
   body{
-    margin:0; background:var(--bg); color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    padding:16px 14px calc(40px + env(safe-area-inset-bottom));
+    margin:0; min-height:100vh; color:var(--frost);
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(ellipse 70% 40% at 50% -5%, rgba(124,145,182,0.28), transparent 70%),
+      linear-gradient(rgba(186,215,247,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(186,215,247,0.05) 1px, transparent 1px);
+    background-size:100% 100%, 88px 88px, 88px 88px;
+    background-attachment:fixed;
+    font-family:var(--font-ui); font-size:14px; letter-spacing:-0.01em;
+    padding:24px 16px calc(40px + env(safe-area-inset-bottom));
   }
   .wrap{max-width:520px; margin:0 auto;}
-  header{grid-area:head;}
-  h1{font-size:18px; font-weight:700; margin:4px 0 2px;}
-  .sub{color:var(--muted); font-size:13px; margin-bottom:16px;}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px;}
-  .row{display:flex; gap:10px; margin-bottom:10px;}
-  .row > div{flex:1; min-width:0;}
-  label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px;}
-  input, select, textarea{
-    width:100%; background:var(--field); border:1px solid var(--line); color:var(--text);
-    padding:11px 10px; border-radius:9px; font-size:16px; outline:none;
+
+  /* Header */
+  header{grid-area:head; margin-bottom:24px;}
+  .eyebrow{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.10em; text-transform:uppercase;
+    color:var(--mist); font-feature-settings:"tnum" on;
   }
-  textarea{min-height:90px; font-size:13px; font-family:inherit; resize:vertical; padding:10px;}
-  input:focus, select:focus, textarea:focus{border-color:var(--accent);}
+  h1{
+    font-family:var(--font-display); font-weight:500; font-size:32px; line-height:1.14;
+    margin:8px 0 6px; letter-spacing:-0.01em;
+    background:linear-gradient(180deg,#d8ecf8,#98c0ef);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sub{color:var(--fog); font-size:14px; line-height:1.43;}
+
+  /* Card */
+  .card{
+    background:var(--surface); border-radius:16px; padding:20px; margin-bottom:16px;
+    box-shadow:var(--shadow-card);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  }
+  .card-head{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:16px;}
+  .section-title{
+    font-family:var(--font-mono); font-size:11px; font-weight:400; letter-spacing:0.10em;
+    text-transform:uppercase; color:var(--mist); margin:0;
+  }
+
+  /* Form */
+  .row{display:flex; gap:12px; margin-bottom:12px;}
+  .row > div{flex:1; min-width:0;}
+  label{display:block; font-size:12px; line-height:1.33; color:var(--fog); margin-bottom:6px; font-weight:500;}
+  input[type=text], textarea{
+    width:100%; background:var(--surface-2); border:none; color:var(--text);
+    box-shadow:var(--edge) 0 0 0 1px inset;
+    padding:11px 12px; border-radius:6px; font-size:16px; outline:none;
+    font-family:var(--font-ui); transition:box-shadow .15s ease;
+  }
+  input[type=text]{font-feature-settings:"tnum" on;}
+  input::placeholder, textarea::placeholder{color:rgba(199,211,234,0.45);}
+  input[type=text]:focus, textarea:focus{box-shadow:var(--edge-strong) 0 0 0 1px inset, 0 0 0 3px rgba(102,58,243,0.18);}
+  textarea{min-height:110px; font-size:13px; line-height:1.5; resize:vertical; font-family:var(--font-mono); letter-spacing:0;}
+
+  /* Pill buttons */
+  .btnrow{display:flex; gap:8px; margin-top:12px;}
+  .pill{
+    flex:1; padding:10px 16px; border:none; border-radius:999px; cursor:pointer;
+    background:rgba(186,214,247,0.06); color:var(--text);
+    box-shadow:var(--edge) 0 0 0 1px inset;
+    font-family:var(--font-ui); font-size:14px; font-weight:500; letter-spacing:-0.01em;
+    transition:background .15s ease;
+  }
+  .pill:hover{background:rgba(186,214,247,0.12);}
+  .pill:active{transform:translateY(1px);}
+  .pill.outline{background:transparent; color:var(--frost); flex:0 0 auto;}
+  .pill.outline:hover{background:rgba(255,107,107,0.10); color:#ffb3ab;}
+
   .dirbtns{display:flex; gap:8px;}
   .dirbtn{
-    flex:1; padding:11px 4px; border-radius:9px; text-align:center; font-weight:700; font-size:14px;
-    border:1px solid var(--line); cursor:pointer; user-select:none;
-    background:transparent; color:var(--text); font-family:inherit;
+    flex:1; padding:11px 4px; border:none; border-radius:999px; text-align:center;
+    font-family:var(--font-ui); font-weight:600; font-size:13px; letter-spacing:0.02em;
+    cursor:pointer; user-select:none; color:var(--fog);
+    background:transparent; box-shadow:var(--edge) 0 0 0 1px inset;
+    transition:background .15s ease, color .15s ease;
   }
-  .dirbtn.long.active{background:rgba(61,220,151,0.15); border-color:var(--long); color:var(--long);}
-  .dirbtn.short.active{background:rgba(255,107,107,0.15); border-color:var(--short); color:var(--short);}
+  .dirbtn.long.active{background:rgba(79,209,165,0.12); color:var(--long); box-shadow:rgba(79,209,165,0.45) 0 0 0 1px inset;}
+  .dirbtn.short.active{background:rgba(255,122,107,0.12); color:var(--short); box-shadow:rgba(255,122,107,0.45) 0 0 0 1px inset;}
+
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;}
   .fixedchip{
-    display:inline-block; font-size:11px; background:var(--field); border:1px solid var(--line);
-    color:var(--muted); padding:4px 8px; border-radius:20px; margin-right:6px; margin-top:4px;
+    font-size:12px; font-weight:500; background:var(--tint); color:var(--frost);
+    padding:4px 8px; border-radius:6px;
   }
+
+  /* Risk slider */
+  .risk-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px;}
+  .risk-val{font-family:var(--font-display); font-size:28px; font-weight:500; color:var(--text); line-height:1; font-feature-settings:"tnum" on;}
+  .risk-val small{font-family:var(--font-ui); font-size:13px; color:var(--fog); font-weight:400; margin-left:6px;}
+  input[type=range]{
+    -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:999px; outline:none;
+    background:linear-gradient(90deg, var(--violet) 0%, var(--violet) var(--fill,30%), rgba(186,214,247,0.12) var(--fill,30%));
+    margin:8px 0 4px; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:22px; height:22px; border-radius:50%;
+    background:#fff; border:none; box-shadow:0 0 0 4px rgba(102,58,243,0.35), 0 2px 8px rgba(0,0,0,0.5);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:22px; height:22px; border-radius:50%; background:#fff; border:none;
+    box-shadow:0 0 0 4px rgba(102,58,243,0.35), 0 2px 8px rgba(0,0,0,0.5);
+  }
+  input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 6px rgba(102,58,243,0.55);}
+  .ticks{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--fog); letter-spacing:0.05em; margin-top:4px;}
+
+  /* Primary CTA */
   button.calc{
-    width:100%; padding:14px; border:none; border-radius:11px; background:var(--accent);
-    color:#06140e; font-weight:800; font-size:15px; margin-top:4px; cursor:pointer; font-family:inherit;
+    width:100%; padding:14px 24px; border:none; border-radius:999px; background:var(--violet);
+    color:#fff; font-weight:600; font-size:15px; cursor:pointer; font-family:var(--font-ui);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,0.25), 0 8px 24px rgba(102,58,243,0.35);
+    transition:background .15s ease; margin-bottom:24px;
   }
-  button.calc:active{opacity:0.85;}
-  button.calc.secondary{margin-top:8px; background:#2a3a4a; color:var(--text);}
+  button.calc:hover{background:var(--violet-hi);}
+  button.calc:active{transform:translateY(1px);}
+
+  /* Results */
   .result{display:none;}
   .result.show{display:block;}
-  .rline{display:flex; justify-content:space-between; gap:8px; padding:6px 0; font-size:14px; border-bottom:1px dashed var(--line);}
-  .rline:last-child{border-bottom:none;}
-  .rline .k{color:var(--muted);}
-  .rline .v{font-weight:700; text-align:right; overflow-wrap:anywhere;}
-  .section-title{font-size:12px; font-weight:700; color:var(--muted); letter-spacing:.03em; margin:2px 0 8px; text-transform:uppercase;}
-  .badge{
-    display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; margin-left:6px;
+  .rline{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:11px 0; font-size:14px; border-bottom:1px solid var(--edge);}
+  .rline:last-child{border-bottom:none; padding-bottom:0;}
+  .rline:first-of-type{padding-top:0;}
+  .rline .k{color:var(--fog);}
+  .rline .v{color:var(--text); font-weight:500; text-align:right; overflow-wrap:anywhere; font-feature-settings:"tnum" on;}
+
+  /* Sizing hierarchy */
+  .sizing{box-shadow:var(--shadow-hero); background:rgba(186,214,247,0.045);}
+  .metric .k{display:block; font-size:12px; color:var(--fog); font-weight:500; margin-bottom:6px;}
+  .metric .v{display:block; color:var(--text); font-feature-settings:"tnum" on; overflow-wrap:anywhere;}
+  .metric.primary .v{
+    font-family:var(--font-display); font-weight:500; font-size:44px; line-height:1.1;
+    background:linear-gradient(180deg,#ffffff,#b9d4f3); -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  .badge.ok{background:rgba(61,220,151,0.15); color:var(--accent);}
-  .badge.bad{background:rgba(255,93,93,0.15); color:var(--danger);}
+  .metric-sub{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; padding-top:16px; border-top:1px solid var(--edge);}
+  .metric.secondary .v{font-family:var(--font-display); font-weight:500; font-size:22px; line-height:1.2;}
+  .metric.tertiary .v{font-size:16px; font-weight:500; color:var(--mist); line-height:1.5; padding-top:4px;}
+
+  .badge{display:inline-block; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:500;}
+  .badge.ok{background:rgba(79,209,165,0.12); color:var(--long);}
+  .badge.bad{background:rgba(255,107,107,0.14); color:var(--danger);}
+  .badge.rr{background:var(--tint); color:var(--frost); font-family:var(--font-mono); letter-spacing:0.04em;}
+
   .warnbox{
-    background:rgba(255,184,77,0.12); border:1px solid var(--warn); color:var(--warn);
-    padding:10px 12px; border-radius:9px; font-size:13px; margin-bottom:12px; display:none;
+    background:rgba(245,194,107,0.08); box-shadow:rgba(245,194,107,0.35) 0 0 0 1px inset; color:var(--warn);
+    padding:12px 14px; border-radius:12px; font-size:13px; line-height:1.5; margin-bottom:16px; display:none;
   }
   .warnbox.show{display:block;}
-  .tpgrid{margin-top:6px;}
-  .tprow{display:flex; justify-content:space-between; gap:8px; font-size:13px; padding:5px 0;}
-  .tprow .lab{color:var(--muted);}
-  .footer-note{font-size:11px; color:var(--muted); text-align:center; margin-top:18px; line-height:1.5;}
-  #parseMsg{font-size:12px; color:var(--muted); margin-top:6px; min-height:1em;}
 
-  /* Desktop: dua kolom — input kiri, hasil kanan */
+  /* TP berlapis */
+  .tpgrid{display:flex; flex-direction:column; gap:8px;}
+  .tprow{
+    display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:14px;
+    padding:12px 14px; border-radius:12px; background:var(--surface-2);
+    box-shadow:var(--edge) 0 0 0 1px inset;
+  }
+  .tp-no{font-family:var(--font-mono); font-size:11px; letter-spacing:0.10em; color:var(--fog);}
+  .tp-price{font-family:var(--font-display); font-size:20px; font-weight:500; color:var(--text); font-feature-settings:"tnum" on; overflow-wrap:anywhere;}
+  .tp-close{text-align:right; line-height:1.2;}
+  .tp-close b{display:block; font-family:var(--font-display); font-size:20px; font-weight:500; color:var(--long);}
+  .tp-close span{font-size:11px; color:var(--fog);}
+
+  .footer-note{font-size:12px; color:var(--fog); text-align:center; margin-top:24px; line-height:1.5;}
+  #parseMsg{font-size:12px; color:var(--fog); margin-top:10px; min-height:1em; line-height:1.4;}
+
+  /* Desktop: dua kolom, input kiri, hasil kanan */
   @media (min-width: 900px){
-    body{padding:28px 24px 48px;}
+    body{padding:48px 24px 56px;}
     .wrap{
-      max-width:1040px;
+      max-width:1080px;
       display:grid;
       grid-template-columns:1fr 1fr;
       grid-template-areas:"head head" "left right" "foot foot";
       column-gap:24px; align-items:start;
     }
+    h1{font-size:44px; line-height:1.16;}
     .col-left{grid-area:left;}
     .col-right{grid-area:right; position:sticky; top:24px;}
     .footer-note{grid-area:foot;}
@@ -100,21 +226,25 @@
 <div class="wrap">
 
   <header>
-    <h1>⚡ Kalkulator Posisi</h1>
-    <div class="sub">Risk 1% per trade · paste sinyal, langsung entry.</div>
+    <div class="eyebrow">⚡ Futures · 5x Isolated</div>
+    <h1>Kalkulator Posisi</h1>
+    <div class="sub">Risk <span id="subRisk">2%</span> per trade · paste sinyal, langsung entry.</div>
   </header>
 
   <div class="col-left">
 
     <div class="card" id="pasteCard">
-      <div class="section-title">📋 Paste Sinyal (auto-isi)</div>
+      <div class="card-head"><div class="section-title">Paste Sinyal</div></div>
       <textarea id="pasteArea" placeholder="Tempel teks sinyal dari grup di sini..." aria-label="Teks sinyal"></textarea>
-      <button class="calc secondary" type="button" onclick="parseSignal()">Auto-Isi dari Sinyal</button>
+      <div class="btnrow">
+        <button class="pill" type="button" onclick="parseSignal()">Auto-Isi dari Sinyal</button>
+        <button class="pill outline" type="button" onclick="resetSignal()" title="Hapus sinyal dan hasil sebelumnya">↺ Reset</button>
+      </div>
       <div id="parseMsg" role="status"></div>
     </div>
 
     <div class="card">
-      <div class="section-title">Sinyal</div>
+      <div class="card-head"><div class="section-title">Sinyal</div></div>
       <div class="row">
         <div>
           <label for="pair">Pair</label>
@@ -148,12 +278,19 @@
           <input id="balance" type="text" inputmode="decimal" value="1000" autocomplete="off" enterkeyhint="done">
         </div>
       </div>
-      <div>
-        <span class="fixedchip">Leverage: 5x (tetap)</span>
-        <span class="fixedchip">Margin: Isolated (tetap)</span>
-        <span class="fixedchip">Risk: 1% (tetap)</span>
-        <span class="fixedchip">Fee: 0,05%/sisi</span>
+      <div class="chips">
+        <span class="fixedchip">Leverage 5x (tetap)</span>
+        <span class="fixedchip">Margin Isolated (tetap)</span>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="risk-head">
+        <label for="risk" class="section-title" style="margin:0">Risk per Trade</label>
+        <div class="risk-val" id="riskVal">2%<small id="riskUsd"></small></div>
+      </div>
+      <input id="risk" type="range" min="0.5" max="5" step="0.5" value="2" aria-describedby="riskVal">
+      <div class="ticks" aria-hidden="true"><span>0,5%</span><span>1%</span><span>2%</span><span>3%</span><span>4%</span><span>5%</span></div>
     </div>
 
     <button class="calc" type="button" onclick="calculate()">Hitung Posisi</button>
@@ -166,16 +303,17 @@
 
     <div class="result" id="result" aria-live="polite">
 
-      <div class="card">
-        <div class="section-title">💰 Sizing</div>
-        <div class="rline"><span class="k">Risk Amount (1%)</span><span class="v" id="rRisk">-</span></div>
-        <div class="rline"><span class="k">Initial Margin</span><span class="v" id="rMargin">-</span></div>
-        <div class="rline"><span class="k">Position Size</span><span class="v" id="rSize">-</span></div>
-        <div class="rline"><span class="k">Notional Value</span><span class="v" id="rNotional">-</span></div>
+      <div class="card sizing">
+        <div class="card-head"><div class="section-title">Sizing</div></div>
+        <div class="metric primary"><span class="k">Initial Margin</span><span class="v" id="rMargin">-</span></div>
+        <div class="metric-sub">
+          <div class="metric secondary"><span class="k">Position Size</span><span class="v" id="rSize">-</span></div>
+          <div class="metric tertiary"><span class="k">Risk Amount (<span id="rRiskPct">2%</span>)</span><span class="v" id="rRisk">-</span></div>
+        </div>
       </div>
 
       <div class="card">
-        <div class="section-title">📍 Entry &amp; Stop</div>
+        <div class="card-head"><div class="section-title">Entry &amp; Stop</div></div>
         <div class="rline"><span class="k">Entry</span><span class="v" id="rEntry">-</span></div>
         <div class="rline"><span class="k">Stop Loss</span><span class="v" id="rSL">-</span></div>
         <div class="rline"><span class="k">Risk Distance</span><span class="v" id="rDist">-</span></div>
@@ -184,15 +322,8 @@
       </div>
 
       <div class="card" id="tpCard">
-        <div class="section-title">🎯 Take Profit Berlapis <span id="rRR"></span></div>
+        <div class="card-head"><div class="section-title">Take Profit Berlapis</div><span id="rRR"></span></div>
         <div class="tpgrid" id="tpGrid"></div>
-      </div>
-
-      <div class="card">
-        <div class="section-title">🔢 Fee Estimasi</div>
-        <div class="rline"><span class="k">Fee Entry</span><span class="v" id="rFeeEntry">-</span></div>
-        <div class="rline"><span class="k">Fee Exit (avg)</span><span class="v" id="rFeeExit">-</span></div>
-        <div class="rline"><span class="k">Total Fee</span><span class="v" id="rFeeTotal">-</span></div>
       </div>
 
     </div>
@@ -201,7 +332,7 @@
 
   <div class="footer-note">
     Semua kalkulasi dilakukan langsung di perangkat kamu (offline, tidak dikirim ke mana pun).<br>
-    Leverage 5x · Isolated · Risk 1% selalu dipakai otomatis.
+    Leverage 5x · Isolated · Sizing sudah memperhitungkan fee taker 0,05%/sisi.
   </div>
 
 </div>
@@ -220,12 +351,16 @@ function decodeSignalText(text){
   }
 }
 
-function parseSignal(){
+function setMsg(text, color){
   const msg = document.getElementById('parseMsg');
+  msg.textContent = text;
+  msg.style.color = color || 'var(--fog)';
+}
+
+function parseSignal(){
   let text = document.getElementById('pasteArea').value;
   if(!text.trim()){
-    msg.textContent = '⚠️ Belum ada teks yang di-paste.';
-    msg.style.color = 'var(--warn)';
+    setMsg('⚠️ Belum ada teks yang di-paste.', 'var(--warn)');
     return;
   }
   const decoded = decodeSignalText(text);
@@ -250,17 +385,33 @@ function parseSignal(){
   if(tpMatch){ document.getElementById('tp').value = tpMatch[1].replace(',', '.'); found.push('TP'); } else missing.push('TP');
 
   if(missing.length === 0){
-    msg.textContent = '✅ Semua field terisi (' + found.join(', ') + '). Tinggal tap "Hitung Posisi".';
-    msg.style.color = 'var(--accent)';
+    setMsg('✅ Semua field terisi (' + found.join(', ') + '). Posisi sudah dihitung.', 'var(--long)');
     calculate();
   } else {
-    msg.textContent = '⚠️ Tidak terbaca: ' + missing.join(', ') + '. Isi manual di bawah.';
-    msg.style.color = 'var(--warn)';
+    setMsg('⚠️ Tidak terbaca: ' + missing.join(', ') + '. Isi manual di bawah.', 'var(--warn)');
   }
 }
 
+// Hapus sinyal & hasil sebelumnya. Balance dan risk tetap disimpan.
+function resetSignal(){
+  document.getElementById('pasteArea').value = '';
+  ['pair','entry','sl','tp'].forEach(id => document.getElementById(id).value = '');
+  setDir('long');
+  document.getElementById('result').classList.remove('show');
+  const warnBox = document.getElementById('warnBox');
+  warnBox.className = 'warnbox';
+  warnBox.innerHTML = '';
+  ['rMargin','rSize','rRisk','rEntry','rSL','rDist','rLiq','rSafe'].forEach(id => document.getElementById(id).textContent = '-');
+  document.getElementById('tpGrid').innerHTML = '';
+  document.getElementById('rRR').innerHTML = '';
+  document.getElementById('tpCard').style.display = 'block';
+  setMsg('Sinyal dihapus. Siap paste sinyal baru.');
+  saveState();
+  document.getElementById('pasteArea').focus();
+}
+
 let direction = 'long';
-function setDir(d){
+function applyDir(d){
   direction = d;
   const isLong = d === 'long';
   const btnLong = document.getElementById('btnLong');
@@ -269,9 +420,28 @@ function setDir(d){
   btnShort.classList.toggle('active', !isLong);
   btnLong.setAttribute('aria-pressed', isLong);
   btnShort.setAttribute('aria-pressed', !isLong);
+}
+function setDir(d){
+  applyDir(d);
   saveState();
   autoRecalc();
 }
+
+// ---- Risk slider ----
+const riskEl = document.getElementById('risk');
+function getRiskPct(){ return parseFloat(riskEl.value) || 2; }
+function fmtRisk(p){ return p.toLocaleString('id-ID', {maximumFractionDigits:1}) + '%'; }
+function updateRiskUI(){
+  const p = getRiskPct();
+  const min = parseFloat(riskEl.min), max = parseFloat(riskEl.max);
+  riskEl.style.setProperty('--fill', ((p - min) / (max - min) * 100) + '%');
+  const bal = parseNum('balance');
+  document.getElementById('riskVal').firstChild.nodeValue = fmtRisk(p);
+  document.getElementById('riskUsd').textContent = isFinite(bal) && bal > 0 ? '≈ ' + fmtUSD(bal * p / 100) : '';
+  document.getElementById('subRisk').textContent = fmtRisk(p);
+  document.getElementById('rRiskPct').textContent = fmtRisk(p);
+}
+riskEl.addEventListener('input', ()=>{ updateRiskUI(); saveState(); autoRecalc(); });
 
 function fmtUSD(n){
   if(!isFinite(n)) return '-';
@@ -322,13 +492,14 @@ function calculate(){
   warnBox.innerHTML = '';
 
   const pair = (document.getElementById('pair').value || '—').toUpperCase();
+  const coin = pair.replace('USDT','');
   const entry = parseNum('entry');
   const sl = parseNum('sl');
   let tp = parseNum('tp');
   const balance = parseNum('balance') || 1000;
 
   const LEV = 5;
-  const RISK_PCT = 0.01;
+  const RISK_PCT = getRiskPct() / 100;
   const TAKER_FEE = 0.0005; // 0.05% per sisi
 
   if(!entry || !sl || entry<=0 || sl<=0){
@@ -355,7 +526,6 @@ function calculate(){
   const feeRate = LEV * (TAKER_FEE*2);
   const initialMargin = riskAmount / (effLossRate + feeRate);
   const posSize = (initialMargin * LEV) / entry;
-  const notional = posSize * entry;
 
   // Liquidation price estimate (isolated, mmr approx 0.5%)
   const MMR = 0.005;
@@ -370,8 +540,7 @@ function calculate(){
   // Fill result
   document.getElementById('rRisk').textContent = fmtUSD(riskAmount);
   document.getElementById('rMargin').textContent = fmtUSD(initialMargin);
-  document.getElementById('rSize').textContent = fmtQty(posSize) + ' ' + pair.replace('USDT','');
-  document.getElementById('rNotional').textContent = fmtUSD(notional);
+  document.getElementById('rSize').textContent = fmtQty(posSize) + ' ' + coin;
   document.getElementById('rEntry').textContent = fmtPrice(entry);
   document.getElementById('rSL').textContent = fmtPrice(sl);
   document.getElementById('rDist').textContent = fmtPct(riskDistPct*100);
@@ -385,21 +554,14 @@ function calculate(){
     warnBox.className = 'warnbox show';
   }
 
-  // TP layered
+  // TP berlapis: harga dan persentase close dari total posisi
   const tpCard = document.getElementById('tpCard');
   const tpGrid = document.getElementById('tpGrid');
   const rrEl = document.getElementById('rRR');
   tpGrid.innerHTML = '';
-  rrEl.textContent = '';
+  rrEl.innerHTML = '';
 
   const riskDistAbs = entry * riskDistPct;
-
-  function feeExit(qty, price){
-    return qty * price * TAKER_FEE;
-  }
-  function grossProfit(qty, priceDiff){
-    return qty * priceDiff;
-  }
 
   if(isFinite(tp) && tp>0){
     let rewardDistPct;
@@ -407,61 +569,44 @@ function calculate(){
     else rewardDistPct = (tp - entry)/entry;
 
     const rr = rewardDistPct / riskDistPct;
-    rrEl.textContent = '(R:R = 1:' + rr.toFixed(2) + ')';
+    rrEl.innerHTML = '<span class="badge rr">R:R 1:' + rr.toFixed(2) + '</span>';
 
     let levels = [];
     if(rr < 1){
-      levels = [{label:'TP3 (target sinyal)', price: tp, prop: 1.0}];
-      warnBox.innerHTML += (warnBox.innerHTML? '<br>':'') + '⚠️ R:R di bawah 1:1 — reward lebih kecil dari risk.';
+      levels = [{price: tp, prop: 1.0}];
+      warnBox.innerHTML += (warnBox.innerHTML? '<br>':'') + '⚠️ R:R di bawah 1:1, reward lebih kecil dari risk.';
       warnBox.className = 'warnbox show';
     } else if(rr < 2){
       const tp1 = direction==='short' ? entry - riskDistAbs : entry + riskDistAbs;
       levels = [
-        {label:'TP1 (1:1)', price: tp1, prop: 0.5},
-        {label:'TP3 (target sinyal)', price: tp, prop: 0.5}
+        {price: tp1, prop: 0.5},
+        {price: tp, prop: 0.5}
       ];
     } else {
       const tp1 = direction==='short' ? entry - riskDistAbs : entry + riskDistAbs;
       const tp2 = direction==='short' ? entry - 2*riskDistAbs : entry + 2*riskDistAbs;
       levels = [
-        {label:'TP1 (1:1)', price: tp1, prop: 0.33},
-        {label:'TP2 (1:2)', price: tp2, prop: 0.33},
-        {label:'TP3 (target sinyal)', price: tp, prop: 0.34}
+        {price: tp1, prop: 0.33},
+        {price: tp2, prop: 0.33},
+        {price: tp, prop: 0.34}
       ];
     }
 
-    let totalProfit = 0;
-    levels.forEach(lv=>{
+    levels.forEach((lv, i)=>{
       const qty = posSize * lv.prop;
-      const diff = direction==='short' ? (entry - lv.price) : (lv.price - entry);
-      const gross = grossProfit(qty, diff);
-      const fee = feeExit(qty, lv.price);
-      const net = gross - fee;
-      totalProfit += net;
       const row = document.createElement('div');
       row.className = 'tprow';
-      row.innerHTML = `<span class="lab">${lv.label} · ${fmtPrice(lv.price)} · tutup ${(lv.prop*100).toFixed(0)}%</span><span>+${fmtUSD(net)}</span>`;
+      row.innerHTML =
+        `<span class="tp-no">TP${i+1}</span>` +
+        `<span class="tp-price">${fmtPrice(lv.price)}</span>` +
+        `<span class="tp-close"><b>Close ${(lv.prop*100).toFixed(0)}%</b><span>${fmtQty(qty)} ${coin}</span></span>`;
       tpGrid.appendChild(row);
     });
-    const totalRow = document.createElement('div');
-    totalRow.className = 'tprow';
-    totalRow.style.borderTop = '1px solid var(--line)';
-    totalRow.style.paddingTop = '8px';
-    totalRow.style.marginTop = '4px';
-    totalRow.innerHTML = `<span class="lab" style="font-weight:700;color:var(--text)">Total jika semua TP kena</span><span style="color:var(--accent);font-weight:800">+${fmtUSD(totalProfit)}</span>`;
-    tpGrid.appendChild(totalRow);
 
     tpCard.style.display = 'block';
   } else {
     tpCard.style.display = 'none';
   }
-
-  // Fees
-  const feeEntry = notional * TAKER_FEE;
-  const feeExitAvg = notional * TAKER_FEE; // avg, assuming exit near entry notional
-  document.getElementById('rFeeEntry').textContent = fmtUSD(feeEntry);
-  document.getElementById('rFeeExit').textContent = fmtUSD(feeExitAvg) + ' (est.)';
-  document.getElementById('rFeeTotal').textContent = fmtUSD(feeEntry + feeExitAvg);
 
   document.getElementById('result').classList.add('show');
   saveState();
@@ -473,7 +618,7 @@ const FIELDS = ['pair','entry','sl','tp','balance'];
 
 function saveState(){
   try{
-    const data = {direction};
+    const data = {direction, risk: riskEl.value};
     FIELDS.forEach(id => data[id] = document.getElementById(id).value);
     localStorage.setItem(STORE_KEY, JSON.stringify(data));
   }catch(e){}
@@ -482,14 +627,8 @@ function loadState(){
   try{
     const data = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
     FIELDS.forEach(id => { if(data[id]) document.getElementById(id).value = data[id]; });
-    if(data.direction === 'short' || data.direction === 'long'){
-      direction = data.direction;
-      const isLong = direction === 'long';
-      document.getElementById('btnLong').classList.toggle('active', isLong);
-      document.getElementById('btnShort').classList.toggle('active', !isLong);
-      document.getElementById('btnLong').setAttribute('aria-pressed', isLong);
-      document.getElementById('btnShort').setAttribute('aria-pressed', !isLong);
-    }
+    if(data.risk) riskEl.value = data.risk;
+    if(data.direction === 'short' || data.direction === 'long') applyDir(data.direction);
   }catch(e){}
 }
 
@@ -507,7 +646,7 @@ function autoRecalc(){
 
 FIELDS.forEach(id => {
   const el = document.getElementById(id);
-  el.addEventListener('input', ()=>{ saveState(); autoRecalc(); });
+  el.addEventListener('input', ()=>{ saveState(); autoRecalc(); if(id === 'balance') updateRiskUI(); });
   el.addEventListener('keydown', e => {
     if(e.key === 'Enter'){ e.preventDefault(); el.blur(); calculate(); }
   });
@@ -522,6 +661,7 @@ document.getElementById('pasteArea').addEventListener('paste', ()=>{
 });
 
 loadState();
+updateRiskUI();
 
 // PWA: offline setelah kunjungan pertama
 if('serviceWorker' in navigator && location.protocol === 'https:'){

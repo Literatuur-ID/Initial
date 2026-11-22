@@ -1,6 +1,6 @@
 // Service worker: cache-first agar kalkulator langsung terbuka & jalan offline.
 // Naikkan versi ini setiap kali index.html berubah agar pengguna dapat update.
-const CACHE = 'kalkulator-posisi-v2';
+const CACHE = 'kalkulator-posisi-v3';
 const ASSETS = ['.', 'index.html', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', e => {
