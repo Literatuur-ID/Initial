@@ -206,6 +206,8 @@
   }
   .tp-no{font-family:var(--font-mono); font-size:11px; letter-spacing:0.10em; color:var(--fog);}
   .tp-price{font-family:var(--font-display); font-size:20px; font-weight:500; color:var(--text); font-feature-settings:"tnum" on; overflow-wrap:anywhere;}
+  .tp-mid{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .tp-profit{font-size:13px; font-weight:500; color:var(--long); font-feature-settings:"tnum" on;}
   .tp-close{text-align:right; line-height:1.2;}
   .tp-close b{display:block; font-family:var(--font-display); font-size:20px; font-weight:500; color:var(--long);}
   .tp-close span{font-size:11px; color:var(--fog);}
@@ -481,6 +483,10 @@ function fmtUSD(n){
   if(!isFinite(n)) return '-';
   return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
+function fmtUsdt(n){
+  if(!isFinite(n)) return '-';
+  return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
 function fmtPct(n){
   if(!isFinite(n)) return '-';
   return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + '%';
@@ -628,11 +634,13 @@ function calculate(){
 
     levels.forEach((lv, i)=>{
       const qty = posSize * lv.prop;
+      const diff = direction==='short' ? (entry - lv.price) : (lv.price - entry);
+      const profit = qty * diff - qty * lv.price * TAKER_FEE; // net of exit fee
       const row = document.createElement('div');
       row.className = 'tprow';
       row.innerHTML =
         `<span class="tp-no">TP${i+1}</span>` +
-        `<span class="tp-price">${fmtPrice(lv.price)}</span>` +
+        `<span class="tp-mid"><span class="tp-price">${fmtPrice(lv.price)}</span><span class="tp-profit">+${fmtUsdt(profit)} USDT</span></span>` +
         `<span class="tp-close"><b>Close ${(lv.prop*100).toFixed(0)}%</b><span>${fmtQty(qty)} ${coin}</span></span>`;
       tpGrid.appendChild(row);
     });
