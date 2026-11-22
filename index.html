@@ -65,7 +65,14 @@
     background:linear-gradient(180deg,#d8ecf8,#98c0ef);
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  .sub{color:var(--fog); font-size:14px; line-height:1.43;}
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand h1{margin:0;}
+  .scope{width:40px; height:40px; flex:0 0 auto; overflow:visible;
+    filter:drop-shadow(0 0 6px rgba(186,207,247,0.32)) drop-shadow(0 0 14px rgba(102,58,243,0.35));}
+  .scope-dot{transform-origin:32px 32px; animation:scopePulse 2.4s ease-in-out infinite;
+    filter:drop-shadow(0 0 3px rgba(255,93,93,0.9));}
+  @keyframes scopePulse{0%,100%{opacity:1; transform:scale(1);} 50%{opacity:.55; transform:scale(.7);}}
+  @media (prefers-reduced-motion: reduce){.scope-dot{animation:none;}}
 
   /* Card */
   .card{
@@ -216,6 +223,8 @@
       column-gap:24px; align-items:start;
     }
     h1{font-size:44px; line-height:1.16;}
+    .scope{width:54px; height:54px;}
+    .brand{gap:18px;}
     .col-left{grid-area:left;}
     .col-right{grid-area:right; position:sticky; top:24px;}
     .result{display:block;}
@@ -226,7 +235,25 @@
 <body>
 <div class="wrap">
 
-  <header>
+  <header class="brand">
+    <svg class="scope" viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="scopeG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#d8ecf8"/><stop offset="1" stop-color="#98c0ef"/>
+        </linearGradient>
+        <radialGradient id="scopeGlass" cx="0.38" cy="0.32" r="0.75">
+          <stop offset="0" stop-color="#bad6f7" stop-opacity="0.16"/><stop offset="1" stop-color="#bad6f7" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="29" fill="url(#scopeGlass)" stroke="url(#scopeG)" stroke-width="2"/>
+      <circle cx="32" cy="32" r="19" fill="none" stroke="#bad7f7" stroke-opacity="0.35" stroke-width="1"/>
+      <g class="scope-ticks" stroke="url(#scopeG)" stroke-width="1" stroke-linecap="round" opacity="0.7">
+        <path d="M32 7v3M32 54v3M7 32h3M54 32h3"/>
+        <path d="M32 18v2M32 44v2M18 32h2M44 32h2" opacity="0.8"/>
+      </g>
+      <path d="M32 3v22M32 39v22M3 32h22M39 32h22" stroke="url(#scopeG)" stroke-width="1.5" stroke-linecap="round"/>
+      <circle class="scope-dot" cx="32" cy="32" r="2.6" fill="#ff5d5d"/>
+    </svg>
     <h1>Sniper Entry</h1>
   </header>
 
